@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "braintree": "^3.24.0",
     "cheerio": "^1.0.0",
+    "https-proxy-agent": "^7.0.5",
     "next": "14.2.8",
     "react": "^18",
     "react-dom": "^18"

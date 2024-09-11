@@ -12,6 +12,9 @@ export default async function handler(req, res) {
     try {
         // Fetching GraphQL data
         const graphql_data = await graphql(cc, em, ey, cvv);
+
+        console.log(graphql_data)
+
         const tokencc = await graphql_data.data.tokenizeCreditCard.token;
 
         if (!tokencc) {
