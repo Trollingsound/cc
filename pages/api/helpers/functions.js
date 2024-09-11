@@ -32,9 +32,9 @@ export async function get_tokens() {
     }
 }
 
-export async function check_bin(CsrfToken, XcsrfToken, bin) {
+export async function check_bin(CsrfToken, XcsrfToken, bin, startTime) {
 
-    console.log(`\n ✔  token   : ${CsrfToken} \n ✔  x-token : ${XcsrfToken} \n ✔  bin     : ${bin}`)
+    console.log(`\n\n ✔  token   : ${CsrfToken} \n ✔  x-token : ${XcsrfToken} \n ✔  bin     : ${bin}`)
 
     try {
         const bin_request = await fetch("https://www.vccgenerator.org/fetchdata/get-bin-info/", {
@@ -69,6 +69,14 @@ export async function check_bin(CsrfToken, XcsrfToken, bin) {
         const bin_response = await bin_request.json();
 
         console.log(` ✔  issuer  : ${bin_response?.binInfo?.issuer === "N/A" || bin_response?.binInfo?.issuer === undefined ? "none" : bin_response?.binInfo?.issuer}\n ✔  status  : ${bin_response?.binInfo?.country_name_x === "N/A" || bin_response?.binInfo?.country_name_x === undefined ? "faild" : "success"} `)
+
+        const endTime = performance.now(); // Record end time
+        const timeTaken = (endTime - startTime) / 1000; // Time in seconds
+        const truncatedTime = Math.floor(timeTaken * 100) / 100;
+
+        console.log(`\n\n ✔  time takes ${truncatedTime}s `)
+
+        console.log(`\n-------------------------------------------------`)
 
         return bin_response
 
@@ -415,7 +423,7 @@ export async function get_card_info(ccn) {
 
 }
 
-export async function confirm_payment(pm) {
+export async function confirm_payment(pm, startTime) {
 
     const myHeaders = new Headers();
     myHeaders.append("accept", "*/*");
@@ -446,10 +454,40 @@ export async function confirm_payment(pm) {
     const refresh_cookies = await fetch("https://www.veed.io/api/v1/auth/token/refresh", requestOptions)
     const cookie = refresh_cookies.headers.get('set-cookie')
 
-    console.log(cookie ? ` ✔ cookies : true\n` : ` ✔ cookies : false\n`);  // This will print cookies for your current domain, not veed.io
+    // console.log(cookie)
+
+    console.log(cookie ? `\n ✔ cookies  : true` : ` ✔ cookies  : false`);  // This will print cookies for your current domain, not veed.io
+
+    const subscription_route = await fetch("https://www.veed.io/api/v1/subscriptions", {
+        "headers": {
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.8",
+            "billingaccountid": "4118e674-bfde-4b7d-b599-4465b452e9bc",
+            "content-type": "application/json",
+            "priority": "u=1, i",
+            "sec-ch-ua": "\"Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\", \"Brave\";v=\"128\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "sec-gpc": "1",
+            "cookie": `VEED_LOCALE=en; GCLB=CLv4oNyw_4XxVBAD; intercom-id-j76wdp4u=2898e3f0-fac3-4927-afa4-125412156d4e; intercom-device-id-j76wdp4u=17a5cd15-62b3-402a-b7bd-40be9d1ea53f; __stripe_mid=2a5d10ff-3716-4f11-89b8-4846e043468a78c3ee; www_veed_io_refresh_token=O3QRSyjS7tnxk6pvEhwKLhIEY1nkV1Yf; ab.storage.userId.5efd8ea1-77f5-4018-ab94-d683b7e727e5=%7B%22g%22%3A%22e2363cf6-13f5-4a2a-b0d6-c99d6793f18f%22%2C%22c%22%3A1725959855581%2C%22l%22%3A1725959855590%7D; ab.storage.deviceId.5efd8ea1-77f5-4018-ab94-d683b7e727e5=%7B%22g%22%3A%22bb59b159-7a0a-28ff-f4d4-786bc2445299%22%2C%22c%22%3A1725959855596%2C%22l%22%3A1725959855596%7D; ph_phc_Wl8ChnwAGPJn8HE6ZcVBIvnmHXFZL4GcF94U0IV1DC8_posthog=%7B%22distinct_id%22%3A%22e2363cf6-13f5-4a2a-b0d6-c99d6793f18f%22%2C%22%24sesid%22%3A%5B1725960108870%2C%220191db34-34d5-7fda-9d7a-23f624ed5303%22%2C1725959517397%5D%7D; ab.storage.sessionId.5efd8ea1-77f5-4018-ab94-d683b7e727e5=%7B%22g%22%3A%22bcae32a0-e374-8409-a973-21edbedce1e9%22%2C%22e%22%3A1725961910529%2C%22c%22%3A1725959855587%2C%22l%22%3A1725960110529%7D; intercom-session-j76wdp4u=Wko1YlBtQW9tSzUyVWhYU3FOVnVTYkYyNmlkNEUrQzZvWkV6Qjl6bjByWGZjOHoyOU40djdBOVhBWUM3QzJrOS0tUWlSSTMvbUwwbThCL25wc1Y3R3hWQT09--2f848a11c1612661ee84320cdff72cc6932078a8; www_veed_io_user_meta=eyJleHAiOjE3MjU5NjM1MDEsImlhdCI6MTcyNTk2MjYwMSwic3ViIjoiZTIzNjNjZjYtMTNmNS00YTJhLWIwZDYtYzk5ZDY3OTNmMThmIiwicm9sZXMiOlsiVVNFUiJdLCJraWQiOiJwcm9qZWN0cy92ZWVkLXByb2Qtc2VydmVyL2xvY2F0aW9ucy9ldXJvcGUtd2VzdDEva2V5UmluZ3MvdmVlZC1wcm9kLWtleXJpbmcvY3J5cHRvS2V5cy92ZWVkLXByb2QtandrLWtleS9jcnlwdG9LZXlWZXJzaW9ucy8xIiwiZmVhdHVyZXMiOnsibGl2ZUVuYWJsZWQiOnRydWUsImNyZWF0ZU5ld1Byb2plY3RzV2l0aE1pZ3JhdGVkU3VidGl0bGVzIjp0cnVlfSwic2NvcGVzIjpbXX0%3D; user_meta=eyJleHAiOjE3MjU5NjM1MDEsImlhdCI6MTcyNTk2MjYwMSwic3ViIjoiZTIzNjNjZjYtMTNmNS00YTJhLWIwZDYtYzk5ZDY3OTNmMThmIiwicm9sZXMiOlsiVVNFUiJdLCJraWQiOiJwcm9qZWN0cy92ZWVkLXByb2Qtc2VydmVyL2xvY2F0aW9ucy9ldXJvcGUtd2VzdDEva2V5UmluZ3MvdmVlZC1wcm9kLWtleXJpbmcvY3J5cHRvS2V5cy92ZWVkLXByb2QtandrLWtleS9jcnlwdG9LZXlWZXJzaW9ucy8xIiwiZmVhdHVyZXMiOnsibGl2ZUVuYWJsZWQiOnRydWUsImNyZWF0ZU5ld1Byb2plY3RzV2l0aE1pZ3JhdGVkU3VidGl0bGVzIjp0cnVlfSwic2NvcGVzIjpbXX0%3D; AMP_47f1934446=JTdCJTIyZGV2aWNlSWQlMjIlM0ElMjIzMWQwODc4Mi1mY2YyLTRkZTYtOTNlOS0xZTdlNjFiMGRmYzAlMjIlMkMlMjJ1c2VySWQlMjIlM0ElMjJlMjM2M2NmNi0xM2Y1LTRhMmEtYjBkNi1jOTlkNjc5M2YxOGYlMjIlMkMlMjJzZXNzaW9uSWQlMjIlM0ExNzI1OTU5NTE3MzU1JTJDJTIyb3B0T3V0JTIyJTNBZmFsc2UlMkMlMjJsYXN0RXZlbnRUaW1lJTIyJTNBMTcyNTk2MzYxMTU2OCUyQyUyMmxhc3RFdmVudElkJTIyJTNBMTEwJTdE; user_meta=eyJleHAiOjE3MjU5NjQ5NDAsImlhdCI6MTcyNTk2NDA0MCwic3ViIjoiZTIzNjNjZjYtMTNmNS00YTJhLWIwZDYtYzk5ZDY3OTNmMThmIiwicm9sZXMiOlsiVVNFUiJdLCJraWQiOiJwcm9qZWN0cy92ZWVkLXByb2Qtc2VydmVyL2xvY2F0aW9ucy9ldXJvcGUtd2VzdDEva2V5UmluZ3MvdmVlZC1wcm9kLWtleXJpbmcvY3J5cHRvS2V5cy92ZWVkLXByb2QtandrLWtleS9jcnlwdG9LZXlWZXJzaW9ucy8xIiwiZmVhdHVyZXMiOnsibGl2ZUVuYWJsZWQiOnRydWUsImNyZWF0ZU5ld1Byb2plY3RzV2l0aE1pZ3JhdGVkU3VidGl0bGVzIjp0cnVlfSwic2NvcGVzIjpbXX0%3D; ${cookie}`,
+            "Referer": "https://www.veed.io/",
+            "Referrer-Policy": "strict-origin"
+        },
+        "body": "{\"cadence\":\"ANNUALLY\",\"plan\":\"PRO\",\"quantity\":1,\"planPriceId\":\"d26164e6-e27d-4883-83c0-8dd67aae28b0\",\"currency\":\"INR\",\"metadata\":{\"impact_click_id\":\"\"}}",
+        "method": "POST"
+    });
+
+    const subscription_route_json = await subscription_route.json()
+
+    const subscription_route_id = subscription_route_json.data.id
+
+    console.log(` ✔ fetch id : ${subscription_route_id}\n`);
 
     try {
-        const response = await fetch("https://www.veed.io/api/v1/subscriptions/16add1ca-2179-46ad-a321-dac2cb4e6481/confirm-payment", {
+        const response = await fetch(`https://www.veed.io/api/v1/subscriptions/${subscription_route_id}/confirm-payment`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US,en;q=0.9",
@@ -474,6 +512,12 @@ export async function confirm_payment(pm) {
 
         console.log(response_json)
 
+        const endTime = performance.now(); // Record end time
+        const timeTaken = (endTime - startTime) / 1000; // Time in seconds
+        const truncatedTime = Math.floor(timeTaken * 100) / 100;
+
+        console.log(`\n\n ✔  time takes ${truncatedTime}s `)
+
         console.log(`\n-------------------------------------------------`)
 
         return response_json
@@ -482,3 +526,21 @@ export async function confirm_payment(pm) {
     }
 }
 
+export function getCurrentTime() {
+    return new Date();
+}
+
+export function getTimeDifference(time1, time2) {
+    const diffInMs = Math.abs(time2 - time1); // Difference in milliseconds
+
+    const diffInSeconds = Math.floor(diffInMs / 1000);
+    const hours = Math.floor(diffInSeconds / 3600);
+    const minutes = Math.floor((diffInSeconds % 3600) / 60);
+    const seconds = diffInSeconds % 60;
+
+    return {
+        hours: hours,
+        minutes: minutes,
+        seconds: seconds
+    };
+}

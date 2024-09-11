@@ -11,6 +11,7 @@
   "dependencies": {
     "braintree": "^3.24.0",
     "cheerio": "^1.0.0",
+    "framer-motion": "^11.5.4",
     "https-proxy-agent": "^7.0.5",
     "next": "14.2.8",
     "react": "^18",

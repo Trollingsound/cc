@@ -7,10 +7,14 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Method not allowed" });
     }
 
+    const startTime = performance.now();
+
     try {
         const tokens = await get_tokens();
         const CsrfToken = tokens.csrfToken;
         const XcsrfToken = tokens.xcsrfToken;
+
+        console.log(`\n-------------------------------------------------`)
 
         console.log(`\n ✔  ready to call with bin checker aggent`)
 
@@ -19,8 +23,8 @@ export default async function handler(req, res) {
         }
 
         else if (bin == String || Number) {
-            const check_bin_response = await check_bin(CsrfToken, XcsrfToken, bin);
- 
+            const check_bin_response = await check_bin(CsrfToken, XcsrfToken, bin, startTime);
+
             res.status(200).json(check_bin_response)
         }
 
@@ -28,3 +32,5 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: error.toString() });
     }
 }
+
+

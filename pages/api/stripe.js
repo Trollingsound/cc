@@ -9,6 +9,8 @@ export default async function handler(req, res) {
         res.status(200).json({ card: "invalid sended or not sended , please chech request body , ccn , em , ey , cvv" })
     }
 
+    const startTime = performance.now();
+
     try {
 
         const stripe_data = await getStripeData()
@@ -16,7 +18,7 @@ export default async function handler(req, res) {
         console.log(`-------------------------------------------------`)
 
         console.log(`\n ✔ ccn  : ${ccn}\n ✔ em   : ${em}\n ✔ ey   : ${ey}\n ✔ cvv  : ${cvv} `)
-        
+
         console.log(`\n ✔ muid : ${stripe_data.muid}\n ✔ guid : ${stripe_data.guid}\n ✔ sid  : ${stripe_data.sid} `)
 
         const urlencoded = new URLSearchParams();
@@ -71,7 +73,7 @@ export default async function handler(req, res) {
         // console.log(response_json)
         console.log(`\n ✔ pm   : ${pm}`)
 
-        const con_payment = await confirm_payment(pm)
+        const con_payment = await confirm_payment(pm, startTime)
 
         res.status(200).json(con_payment)
     } catch (error) {
